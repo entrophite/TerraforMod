@@ -1,0 +1,9 @@
+2023-04-30
+----------
+
+added mods:
+
+* add resource
+* add specific card
+* prevent sending game status analytics
+
