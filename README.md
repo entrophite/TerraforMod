@@ -1,42 +1,43 @@
-TerraforMod
-===========
+# TerraforMod
 
-A BepInEx-based gameplay mod for Terraformers
+A former BepInEx-based gameplay mod for *Terraformers* now using static code injection. Thanks to the anti-mod measures implemented by the devs, it's not ideal to keep modding this game using BepInEx any more. The so-called "anti-mod" measure is probably as rudimentary as just stripping unused symbols to make decompiling, recompiling and code analysis a bit harder. The current game is shipped with stripped system runtime libraries (e.g. System.dll) as well as stripped game code assemblies. After consideration I chose to statically inject code into the game's assemblies. Fortunately, the game's slow update cycle makes such static code injection sweet. Finally, anti-modding and anti-cheating in single-player games is anyway meaningless and stupid.
 
+<b><span style="color:#60ff60">VERSION: </span></b> 1.4.11@steam
 
-## Included mods
+<b><span style="color:#d0d010">NOTE: </span></b> The game's main code assembly is _GameAssembly.dll.
 
-* add resource
-* add specific card
-* prevent sending game status analytics
+## 1. Production
 
+### 1.1. Production multiplier
 
-## Build info
+<b><span style="color:#4040ff">SYNOPSIS: </span></b> Modifying the production per cycle from region and city buildings, 10x in the example below. It doesn't work with lifeforms.
 
-Tested with game version 1.0.70 (steam) and BepInEx 5.4.21 (downloadable from GitHub)
+```c#
+// Terraf.ProjectsService.GetProjectProds
+// multiple lines in this function, in Line 45, 58, 73, 147, 175, 637, 676, 762, 770, 779, 788, 796, 881, 918, 930, 942, 954, 966
+// example as below around Line 45
+...
+if ((!flag4 || flag6) && !flag7)
+{
+	ResourceProd item = default(ResourceProd);
+	item.Resource = projectById.ResourceProductions[i].type;
+	item.Source = ProdSource.Default;
+	item.Amount = projectById.ResourceProductions[i].amount * 10;  // Line 45
+	CS$<>8__locals1.prods.Add(item);
+}
+...
 
-
-# How to use
-
-1. Install BepInEx
-2. Compile mod source, copy the result TerraforMod.dll into &lt;game root&gt;\BepInEx\plugins (&lt;game root&gt; means the directory with the game's executable `Terraformers.exe`)
-3. Launch the game, press <kbd>F2</kbd> (default) to show/hide the mod window
-
-
-## Q&A
-
-### Pressing F2 had no results; it seems the mod is not loaded?
-
-Some games (seemingly including this one) delete the BepInEx node as an anti-cheating/anti-modding method; try following:
-
-1. check the config file &lt;game root&gt;\BepInEx\configs\BepInEx.cfg (it should be generated with the first game launch after BepInEx installation)
-2. set the config `HideManagerGameObject` to true
-3. save and re-launch the game
-
-
-### What does the mod `prevent seding game status analytics` do?
-
-The game automatically sends the game's status to dev's remote server at the end of each turn.
-This mod option is by default on to intercept this sending; my main purpose is to help the devs reduce contaminated/cheating statitics.
-However I do believe that the devs should run a sanity check before analyzing their data anyway.
-
+// Terraf.ProjectsService.<GetProjectProds>g__AddOwnAbilityProd|40_0
+internal static void <GetProjectProds>g__AddOwnAbilityProd|40_0(ResourceType type, int amount, ref ProjectsService.<>c__DisplayClass40_0 A_2)
+{
+	if (amount == 0)
+	{
+		return;
+	}
+	ResourceProd item = default(ResourceProd);
+	item.Resource = type;
+	item.Amount = amount * 10;
+	item.Source = ProdSource.OwnAbility;
+	A_2.prods.Add(item);
+}
+```
